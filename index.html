@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Love Calculator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ff4081, #ff80ab);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 2rem;
+      color: #e91e63;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.75rem 1.5rem;
+      margin: 0.5rem;
+      background-color: #e91e63;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #d81b60;
+    }
+    #result {
+      font-size: 1.5rem;
+      margin: 1rem 0;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      position: relative;
+    }
+    .close {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: #000;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      text-align: left;
+    }
+    ul li {
+      padding: 0.5rem;
+      border-bottom: 1px solid #ddd;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.75rem; }
+      input { font-size: 0.9rem; }
+      button { font-size: 0.9rem; padding: 0.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Love Calculator</h1>
+    <form id="loveForm">
+      <input type="text" id="name1" placeholder="Your Name" required>
+      <input type="text" id="name2" placeholder="Partner's Name" required>
+      <button type="submit">Calculate</button>
+    </form>
+    <div id="result"></div>
+    <button id="leaderboardBtn">Leaderboards</button>
+  </div>
+
+  <div id="leaderboardModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Leaderboard</h2>
+      <ul id="leaderboardList"></ul>
+    </div>
+  </div>
+
+  <script>
+    let calcCount = 0;
+    const form = document.getElementById('loveForm');
+    const resultDiv = document.getElementById('result');
+    const leaderboardBtn = document.getElementById('leaderboardBtn');
+    const leaderboardModal = document.getElementById('leaderboardModal');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const closeModal = document.querySelector('.close');
+
+    if (!localStorage.getItem('loveLeaderboard')) {
+      localStorage.setItem('loveLeaderboard', JSON.stringify([]));
+    }
+
+    function updateLeaderboardUI() {
+      let data = JSON.parse(localStorage.getItem('loveLeaderboard'));
+      data.sort((a, b) => b.percentage - a.percentage);
+      leaderboardList.innerHTML = '';
+      data.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.name1} & ${item.name2} : ${item.percentage}%`;
+        leaderboardList.appendChild(li);
+      });
+    }
+
+    function saveResult(name1, name2, percentage) {
+      let data = JSON.parse(localStorage.getItem('loveLeaderboard'));
+      data.push({ name1, name2, percentage });
+      localStorage.setItem('loveLeaderboard', JSON.stringify(data));
+      updateLeaderboardUI();
+    }
+
+    function calculateLove(name1, name2) {
+      calcCount++;
+      let percentage;
+      if (calcCount === 1) {
+        percentage = Math.floor(Math.random() * 5) + 93;
+      } else if (calcCount === 2) {
+        percentage = Math.floor(Math.random() * 5) + 87;
+      } else {
+        let combined = (name1 + name2).toLowerCase().replace(/\s/g, '');
+        let sum = 0;
+        for (let i = 0; i < combined.length; i++) {
+          sum += combined.charCodeAt(i) * (i + 1);
+        }
+        let weightedFactor = (sum % 41) + 60;
+        let fluctuation = Math.floor(Math.random() * 6) - 3;
+        percentage = Math.min(100, Math.max(60, weightedFactor + fluctuation));
+      }
+      return percentage;
+    }
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name1 = document.getElementById('name1').value.trim();
+      const name2 = document.getElementById('name2').value.trim();
+      if (name1 === '' || name2 === '') return;
+      
+      const percentage = calculateLove(name1, name2);
+      resultDiv.textContent = `Couple Match: ${percentage}%`;
+      saveResult(name1, name2, percentage);
+      form.reset();
+    });
+
+    leaderboardBtn.addEventListener('click', function() {
+      updateLeaderboardUI();
+      leaderboardModal.style.display = 'block';
+    });
+
+    closeModal.addEventListener('click', function() {
+      leaderboardModal.style.display = 'none';
+    });
+
+    window.addEventListener('click', function(event) {
+      if (event.target === leaderboardModal) {
+        leaderboardModal.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
