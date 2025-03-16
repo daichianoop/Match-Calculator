@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Calculator ❤️</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #ff4081, #ff80ab);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            color: black;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        input, button {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            background: #ff4081;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #ff2055;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            width: 300px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            background: #ff80ab;
+            color: white;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .container {
+                width: 90%;
+                max-width: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Love Calculator ❤️</h1>
+        <form id="loveForm">
+            <input type="text" id="name1" placeholder="Your Name" required>
+            <input type="text" id="name2" placeholder="Partner's Name" required>
+            <button type="submit">Calculate</button>
+        </form>
+        <div id="result"></div>
+        <button id="leaderboardBtn">📊 Leaderboard</button>
+    </div>
+
+    <div id="leaderboardModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Leaderboard</h2>
+            <ul id="leaderboardList"></ul>
+            <button id="resetLeaderboard">Reset Rankings</button>
+        </div>
+    </div>
+
+    <script>
+        let leaderboardModal = document.getElementById("leaderboardModal");
+        let leaderboardBtn = document.getElementById("leaderboardBtn");
+        let closeModal = document.getElementById("closeModal");
+        let resultDiv = document.getElementById("result");
+
+        document.getElementById("loveForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            let name1 = document.getElementById("name1").value.trim();
+            let name2 = document.getElementById("name2").value.trim();
+            if (name1 === "" || name2 === "") {
+                resultDiv.innerHTML = "<p style='color: red;'>Please enter both names.</p>";
+                return;
+            }
+            let percentage = calculateLove(name1, name2);
+            resultDiv.innerHTML = `<h2>${name1} ❤️ ${name2} = ${percentage}%</h2>`;
+            saveResult(name1, name2, percentage);
+        });
+
+        function calculateLove(name1, name2) {
+            let combined = (name1 + name2).toLowerCase().replace(/\s/g, '');
+            let sum = 0;
+
+            for (let i = 0; i < combined.length; i++) {
+                sum += combined.charCodeAt(i) * (i + 1);
+            }
+
+            return (sum % 41) + 60;
+        }
+
+        function saveResult(name1, name2, percentage) {
+            let data = JSON.parse(localStorage.getItem("loveLeaderboard")) || [];
+
+            let existingEntry = data.find(entry => 
+                (entry.name1.toLowerCase() === name1.toLowerCase() && entry.name2.toLowerCase() === name2.toLowerCase()) ||
+                (entry.name1.toLowerCase() === name2.toLowerCase() && entry.name2.toLowerCase() === name1.toLowerCase())
+            );
+
+            if (!existingEntry) {
+                data.push({ name1, name2, percentage });
+                localStorage.setItem("loveLeaderboard", JSON.stringify(data));
+                updateLeaderboardUI();
+            }
+        }
+
+        function updateLeaderboardUI() {
+            let leaderboardList = document.getElementById("leaderboardList");
+            leaderboardList.innerHTML = "";
+
+            let data = JSON.parse(localStorage.getItem("loveLeaderboard")) || [];
+
+            if (data.length === 0) {
+                leaderboardList.innerHTML = "<p>No rankings yet. Start calculating!</p>";
+                return;
+            }
+
+            data.forEach((entry, index) => {
+                let listItem = document.createElement("li");
+                listItem.textContent = `${index + 1}. ${entry.name1} ❤️ ${entry.name2} - ${entry.percentage}%`;
+                leaderboardList.appendChild(listItem);
+            });
+        }
+
+        document.getElementById("resetLeaderboard").addEventListener("click", function () {
+            localStorage.removeItem("loveLeaderboard");
+            updateLeaderboardUI();
+        });
+
+        leaderboardBtn.addEventListener("click", function () {
+            updateLeaderboardUI();
+            leaderboardModal.style.display = "flex";
+        });
+
+        closeModal.addEventListener("click", function () {
+            leaderboardModal.style.display = "none";
+        });
+
+        window.addEventListener("click", function (event) {
+            if (event.target === leaderboardModal) {
+                leaderboardModal.style.display = "none";
+            }
+        });
+
+    </script>
+</body>
+</html>
